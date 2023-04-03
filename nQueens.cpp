@@ -1,7 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <omp.h>
 using namespace std;
@@ -13,11 +11,30 @@ public:
 
   }
 
-  int totalNQueens(int n) {
-    vector<bool> cols(n, false);
-    vector<bool> diag(2*n, false);
-    vector<bool> antiDiag(2*n, false);
-    return backtracking(0, cols, diag, antiDiag, n);
+  int totalNQueens(int n, int numThreads) {
+  
+    int ans=0;
+   
+    
+    #pragma omp parallel for num_threads(numThreads) \
+      reduction(+:ans)
+    
+      for (int col=0; col<n; col++){
+        vector<bool> cols(n, false);
+        vector<bool> diag(2*n, false);
+        vector<bool> antiDiag(2*n, false);
+        int curDiag = - col + n;
+        int curAnti = col;
+        cols[col] = true;
+        diag[curDiag] = true;
+        antiDiag[curAnti] = true;
+        ans += backtracking(1, cols, diag, antiDiag, n);
+      }
+    
+    
+    return ans;
+    
+    
   }
 
 private:
@@ -48,19 +65,22 @@ private:
 
 int main(int argc, char **argv){
   nQueens *sol = new nQueens();
-  int numQueens=0;
+  int numQueens=1, numThreads=1;
   int opt;
-  while ((opt = getopt(argc, argv, "n:")) != -1) {
+  while ((opt = getopt(argc, argv, "n:t:")) != -1) {
     switch (opt) {
     case 'n':
       numQueens = atoi(optarg);
       break;
+    case 't':
+      numThreads = atoi(optarg);
+      break;
     default:
-      fprintf(stderr, "Usage: ./nQueens [-n number of queens]\n");
+      fprintf(stderr, "Usage: ./nQueens [-n number of queens] [-t number of threads]\n");
       exit(EXIT_FAILURE);
     }
   }
-  cout << sol -> totalNQueens(numQueens) << endl;
+  cout << sol -> totalNQueens(numQueens, numThreads) << endl;
   delete sol;
   return 0;
 }
