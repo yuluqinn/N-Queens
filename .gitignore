@@ -2,7 +2,7 @@
 *.d
 
 # executable
-*
+
 
 # Include Makefile
 !Makefile
