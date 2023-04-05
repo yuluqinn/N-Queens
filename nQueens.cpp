@@ -5,7 +5,6 @@
 #include <unistd.h>
 using namespace std;
 
-"Testing"
 class nQueens {
 public:
   //constructor
