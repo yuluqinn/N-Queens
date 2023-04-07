@@ -2,14 +2,14 @@ CC=g++
 CFLAGS=-pedantic -fsigned-char -Wall -Werror -Wextra -fopenmp
 
 .PHONY: all
-all: nQueens
+all: nQueens_task
 
-nQueens: nQueens.o
-	$(CC) $(CFLAGS) -o nQueens nQueens.o
+nQueens_task: nQueens_task.o
+	$(CC) $(CFLAGS) -o nQueens_task nQueens_task.o
 
-nQueens.o: nQueens.cpp
-	$(CC) $(CFLAGS) -c nQueens.cpp
+nQueens_task.o: nQueens_task.cpp
+	$(CC) $(CFLAGS) -c nQueens_task.cpp
 
 .PHONY: clean
 clean:
-	rm -f *.o nQueens
+	rm -f *.o nQueens_task

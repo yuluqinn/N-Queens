@@ -44,6 +44,7 @@ void search(int n, struct board *ptr, int *num_solutions){
   }
   ptr -> pieces--;
 }
+
 void search_for_solutions(int n,
   struct board **stack, int *num_solutions){
     struct board *ptr;
@@ -59,10 +60,24 @@ void search_for_solutions(int n,
 }
 
 int main(int argc, char **argv){
+  int numQueens=1, numThreads=1;
+  int opt;
+  while ((opt = getopt(argc, argv, "n:t:")) != -1) {
+    switch (opt) {
+    case 'n':
+      numQueens = atoi(optarg);
+      break;
+    case 't':
+      numThreads = atoi(optarg);
+      break;
+    default:
+      fprintf(stderr, "Usage: ./nQueens [-n number of queens] [-t number of threads]\n");
+      exit(EXIT_FAILURE);
+    }
+  }
   struct board *stack=NULL;
-  int n=10;
   struct board *initial;
-  for (int i=0; i<n; i++){
+  for (int i=0; i<numQueens; i++){
     initial = (struct board *)malloc(sizeof(struct board));
     initial -> pieces = 1;
     initial -> places[0] = i;
@@ -70,7 +85,7 @@ int main(int argc, char **argv){
     stack = initial;
   }
   int num_solutions = 0;
-  #pragma omp parallel
-  search_for_solutions(n, &initial, &num_solutions);
+  #pragma omp parallel num_threads(numThreads)
+  search_for_solutions(numQueens, &initial, &num_solutions);
   printf("%d ", num_solutions);
 }
