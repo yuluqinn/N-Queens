@@ -35,14 +35,18 @@ public:
 
   }
 
-  int totalNQueens(queue<Node *> Q, int numQueens, int numThreads){
-    return distributeTask(Q, numQueens, numThreads);
+  void totalNQueens(queue<Node *> Q, int numQueens, int numThreads, int *num){
+    distributeTask(Q, numQueens, numThreads, num);
   }
 private:
-  int backtracking(int n, int row, Node *node){
-    if (row == n)
-      return 1;
-    int ans=0;
+  void backtracking(int n, int row, Node *node, int *num){
+    if (row == n){
+      #pragma omp critical
+      {
+        (*num)++;
+      }
+      return;
+    }
     for (int col=0; col<n; col++){
       int curDiag = row - col + n;
       int curAnti = row + col;
@@ -51,37 +55,34 @@ private:
           node -> antiDiag[curAnti])
         continue;
       node -> placeQueen(row + 1, col, curDiag, curAnti);
-      ans += backtracking(n, row + 1, node);
+      backtracking(n, row + 1, node, num);
       node -> removeQueen(col, curDiag, curAnti);
     }
-  return ans;
   }
   
-  int distributeTask(queue<Node *> taskQueue, int numQueens, int numThreads){
-    int ans=0;
-  
+  void distributeTask(queue<Node *> taskQueue, int numQueens, int numThreads, int *num){
+    
     bool done = false;
-    #pragma omp parallel num_threads(numThreads) \
-      reduction(+:ans) 
+    #pragma omp parallel num_threads(numThreads)
     while (true){
       Node *curTask;
       #pragma omp critical
       {
-        if (taskQueue.empty())
+        if (taskQueue.empty()){
           done = true;
+        }
         else {
           curTask = taskQueue.front();
           taskQueue.pop();
         }
       }
-      
+     
       if (done)
         break;
       
-      ans += backtracking(numQueens, curTask -> row + 1, curTask);
-      free(curTask);
+      backtracking(numQueens, curTask -> row + 1, curTask, num);
+      delete curTask;
     }
-    return ans;
   }
 };
 
@@ -152,8 +153,9 @@ int main(int argc, char **argv){
       taskQueue.push(node);
     }
   }
-  exit(0);
-  cout << sol -> totalNQueens(taskQueue, numQueens, numThreads) << endl;
+  int num = 0;
+  sol -> totalNQueens(taskQueue, numQueens, numThreads, &num);
+  cout << num <<endl;
   delete sol;
   return 0;
 }

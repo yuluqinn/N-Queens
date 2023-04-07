@@ -9,6 +9,8 @@
     "string_view": "cpp",
     "utility": "cpp",
     "array": "cpp",
-    "ostream": "cpp"
+    "ostream": "cpp",
+    "*.tcc": "cpp",
+    "atomic": "cpp"
   }
 }
