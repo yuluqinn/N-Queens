@@ -23,8 +23,8 @@ bool no_threat(struct board *ptr){
   int row = ptr->pieces - 1;
   int col = ptr->places[row];
   for (int i=0; i<row; i++){
-    int diff = abs(ptr->places[i] - col);
-    if (diff == 0 || diff == row-i)
+    int pos = abs(ptr->places[i] - col);
+    if (pos == 0 || pos == row-i)
       return false;
   }
   return true;
