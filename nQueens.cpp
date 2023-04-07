@@ -46,6 +46,7 @@ private:
     if (row == n)
       return 1;
     int ans=0;
+   
     for (int col=0; col<n; col++){
       int curDiag = row - col + n;
       int curAnti = row + col;
