@@ -14,6 +14,19 @@ public:
     diag.resize(2 * n, false);
     antiDiag.resize(2 * n, false);
   }
+
+  void placeQueen(int row, int col, int curDiag, int curAnti){
+    this -> cols[col] = true;
+    this -> diag[curDiag] = true;
+    this -> antiDiag[curAnti] = true;
+    this -> row = row;
+  }
+
+  void removeQueen(int col, int curDiag, int curAnti){
+    this -> cols[col] = false;
+    this -> diag[curDiag] = false;
+    this -> antiDiag[curAnti] = false;
+  }
 };
 class nQueens {
 public:
@@ -37,13 +50,9 @@ private:
           node -> diag[curDiag] || 
           node -> antiDiag[curAnti])
         continue;
-      node -> cols[col] = true;
-      node -> diag[curDiag] = true;
-      node -> antiDiag[curAnti] = true;
+      node -> placeQueen(row + 1, col, curDiag, curAnti);
       ans += backtracking(n, row + 1, node);
-      node -> cols[col] = false;
-      node -> diag[curDiag] = false;
-      node -> antiDiag[curAnti] = false;
+      node -> removeQueen(col, curDiag, curAnti);
     }
   return ans;
   }
@@ -96,6 +105,7 @@ int main(int argc, char **argv){
   
   //Node **taskQueue = new Node*[max(numThreads, numQueens)];
   queue<Node *> taskQueue;
+  /*
   for (int col=0; col< numQueens; col++){
     Node *node = new Node(numQueens);
     int curDiag = - col + numQueens;
@@ -107,26 +117,42 @@ int main(int argc, char **argv){
     //taskQueue[col] = node;
     taskQueue.push(node);
   }
-  /*
+  */
   for (int i=0; i<max(numThreads, numQueens); i++){
-    Node *node = new Node(numQueens);
     int row = i / numQueens;
     int col = i % numQueens;
-    int curDiag = row - col + numQueens;
-    int curAnti = row + col;
-    if (node -> cols[col] || 
-        node -> diag[curDiag] || 
-        node -> antiDiag[curAnti])
-      continue;
-    node -> cols[col] = true;
-    node -> diag[curDiag] = true;
-    node -> antiDiag[curAnti] = true;
-    node -> row = row;
-    taskQueue[i] = node;
-    //taskQueue.push_back(node);
+    if (row > 0){
+      Node *prev = taskQueue.front();
+      taskQueue.pop();
+      for (int col=0; col<numQueens; col++){
+        int curDiag = row - col + numQueens;
+        int curAnti = row + col;
+        
+        if (prev -> cols[col] || 
+            prev -> diag[curDiag] || 
+            prev -> antiDiag[curAnti])
+          continue;
+        Node *node = new Node(numQueens);
+        node -> cols = prev -> cols;
+        node -> diag = prev -> diag;
+        node -> antiDiag = prev -> antiDiag;
+        
+        node -> placeQueen(row, col, curDiag, curAnti);
+        
+        taskQueue.push(node);
+        i++;
+      }
+      delete prev; // Free memory for the previous task
+    }
+    else {
+      Node *node = new Node(numQueens);
+      int curDiag = row - col + numQueens;
+      int curAnti = row + col;
+      node -> placeQueen(row, col, curDiag, curAnti);
+      taskQueue.push(node);
+    }
   }
-  */
- 
+  exit(0);
   cout << sol -> totalNQueens(taskQueue, numQueens, numThreads) << endl;
   delete sol;
   return 0;
