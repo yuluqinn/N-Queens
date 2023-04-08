@@ -43,20 +43,17 @@ public:
 
   }
 
-  void totalNQueens(queue<Node *>& Q, int numQueens, int numThreads, int *num){
-    distributeTask(Q, numQueens, numThreads, num);
+  int totalNQueens(queue<Node *>& Q, int numQueens, int numThreads){
+    return distributeTask(Q, numQueens, numThreads);
   }
 private:
-  void backtracking(int n, int row, Node *node, int *num){
+  int backtracking(int n, int row, Node *node){
     if (row == n){
       // add the number of solution
       // Beaware! can't use atomic -> 2 instructions.
-      #pragma omp critical
-      {
-        (*num)++;
-      }
-      return;
+      return 1;
     }
+    int ans=0;
     for (int col=0; col<n; col++){
       int curDiag = row - col + n;
       int curAnti = row + col;
@@ -67,17 +64,19 @@ private:
           node -> antiDiag[curAnti])
         continue;
       node -> placeQueen(row + 1, col, curDiag, curAnti);
-      backtracking(n, row + 1, node, num);
+      ans += backtracking(n, row + 1, node);
       node -> removeQueen(col, curDiag, curAnti);
     }
+    return ans;
   }
   
-  void distributeTask(queue<Node *>& taskQueue, int numQueens, int numThreads, int *num){
+  int distributeTask(queue<Node *>& taskQueue, int numQueens, int numThreads){
     /*
       distribute the tasks across the thread
     */
     bool done = false;
-    #pragma omp parallel num_threads(numThreads) 
+    int num=0;
+    #pragma omp parallel num_threads(numThreads) reduction(+:num)
     while (true){
       Node *curTask;
       // let one thread take a task in a queue one by one
@@ -96,9 +95,10 @@ private:
       if (done)
         break;
       // run subtask in parallel
-      backtracking(numQueens, curTask -> row + 1, curTask, num);
+      num += backtracking(numQueens, curTask -> row + 1, curTask);
       delete curTask;
     }
+    return num;
   }
 };
 
@@ -173,8 +173,7 @@ int main(int argc, char **argv){
   }
   //exit(0);
   //cout << taskQueue.size() ; exit(0);
-  int num = 0;
-  sol -> totalNQueens(taskQueue, numQueens, numThreads, &num);
+  int num = sol -> totalNQueens(taskQueue, numQueens, numThreads);
   cout << "The total number of solutions to the n-queens puzzle: " <<num <<endl;
   delete sol;
   return 0;
