@@ -8,25 +8,28 @@ using namespace std;
 
 class Node {
 public:
-  int row=0;
   vector<bool> cols, diag, antiDiag;
-  Node (int n){
-    // position in column
-    cols.resize(n, false);
-
-    // position of the queen in the diagonal way
-    diag.resize(2 * n, false);
-
-    // position of a queen in the anit diagonal
-    antiDiag.resize(2 * n, false);
+  
+  Node (int n, Node *prev = nullptr){
+    if (prev) {
+      cols = prev->cols;
+      diag = prev->diag;
+      antiDiag = prev->antiDiag;
+    } else {
+      // position in column
+      cols.resize(n, false);
+      // position of the queen in the diagonal way
+      diag.resize(2 * n, false);
+      // position of a queen in the anit diagonal
+      antiDiag.resize(2 * n, false);
+    }
   }
 
-  void placeQueen(int row, int col, int curDiag, int curAnti){
+  void placeQueen(int col, int curDiag, int curAnti){
     // place the queen -> change the correspoding position
     this -> cols[col] = true;
     this -> diag[curDiag] = true;
     this -> antiDiag[curAnti] = true;
-    this -> row = row;
   }
 
   void removeQueen(int col, int curDiag, int curAnti){
@@ -68,8 +71,7 @@ private:
           node -> diag[curDiag] || 
           node -> antiDiag[curAnti])
         continue;
-      node -> placeQueen(row + 1, col, curDiag, curAnti);
-      
+      node -> placeQueen(col, curDiag, curAnti);
       backtracking(n, row + 1, node, num);
       node -> removeQueen(col, curDiag, curAnti);
     }
@@ -91,7 +93,7 @@ private:
   void createTask(int row, int n, int numQueens, int numThreads, Node *prev, int *num){
     if (row == n){
       #pragma omp task 
-      backtracking(numQueens, prev -> row + 1, prev, num);
+      backtracking(numQueens, row, prev, num);
       return;
     }
     if (prev){
@@ -102,11 +104,8 @@ private:
           prev -> diag[curDiag] || 
           prev -> antiDiag[curAnti])
           continue;
-        Node *node = new Node(numQueens);
-        node -> cols = prev -> cols;
-        node -> diag = prev -> diag;
-        node -> antiDiag = prev -> antiDiag;
-        node -> placeQueen(row, col, curDiag, curAnti);
+        Node *node = new Node(numQueens, prev);
+        node -> placeQueen(col, curDiag, curAnti);
         createTask(row + 1, n, numQueens, numThreads,
                 node, num);
       }
@@ -117,7 +116,7 @@ private:
         Node *node = new Node(numQueens);
         int curDiag = row - col + numQueens;
         int curAnti = row + col;
-        node -> placeQueen(row, col, curDiag, curAnti);
+        node -> placeQueen(col, curDiag, curAnti);
 
         createTask(row + 1, n, numQueens, numThreads,
                 node, num);
