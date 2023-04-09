@@ -6,6 +6,8 @@
 #include <omp.h>
 using namespace std;
 
+#define MAX_GRID 32
+
 class nQueens {
 public:
   //constructor
@@ -14,17 +16,18 @@ public:
   }
 
   int totalNQueens(int n) {
-    vector<bool> cols(n, false);
-    vector<bool> diag(2*n, false);
-    vector<bool> antiDiag(2*n, false);
+    bool cols[MAX_GRID] = {};
+    bool diag[2 * MAX_GRID] = {};
+    bool antiDiag[2 * MAX_GRID] = {}; 
+   
     return backtracking(0, cols, diag, antiDiag, n);
   }
 
 private:
   int backtracking(int row,
-                   vector<bool>& cols,
-                   vector<bool>& diag,
-                   vector<bool>& antiDiag,
+                   bool *cols,
+                   bool *diag,
+                   bool *antiDiag,
                    int n){
     if (row == n)
       return 1;
@@ -60,7 +63,8 @@ int main(int argc, char **argv){
       exit(EXIT_FAILURE);
     }
   }
-  cout << sol -> totalNQueens(numQueens) << endl;
+  int num = sol -> totalNQueens(numQueens);
+  cout << "The total number of solutions to the n-queens puzzle: " <<num <<endl;
   delete sol;
   return 0;
 }

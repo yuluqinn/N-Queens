@@ -6,23 +6,19 @@
 #include <queue>
 using namespace std;
 
+#define MAX_GRID 32
+
 class Node {
 public:
-  vector<bool> cols, diag, antiDiag;
-  
-  Node (int n, Node *prev = nullptr){
+  bool cols[MAX_GRID] = {};
+  bool diag[2 * MAX_GRID] = {};
+  bool antiDiag[2 * MAX_GRID] = {}; 
+  Node (Node *prev = nullptr){
     if (prev) {
-      cols = prev->cols;
-      diag = prev->diag;
-      antiDiag = prev->antiDiag;
-    } else {
-      // position in column
-      cols.resize(n, false);
-      // position of the queen in the diagonal way
-      diag.resize(2 * n, false);
-      // position of a queen in the anit diagonal
-      antiDiag.resize(2 * n, false);
-    }
+      copy(prev->cols, prev->cols + MAX_GRID, cols);
+      copy(prev->diag, prev->diag + 2 * MAX_GRID, diag);
+      copy(prev->antiDiag, prev->antiDiag + 2 * MAX_GRID, antiDiag);
+    } 
   }
 
   void placeQueen(int col, int curDiag, int curAnti){
@@ -39,6 +35,7 @@ public:
     this -> antiDiag[curAnti] = false;
   }
 };
+
 class nQueens {
 public:
   //constructor
@@ -85,6 +82,7 @@ private:
     {
       #pragma omp single nowait
       {
+        
         createTask(0, numChild, numQueens, numThreads, nullptr, num);
       }
     }
@@ -92,7 +90,7 @@ private:
 
   void createTask(int row, int n, int numQueens, int numThreads, Node *prev, int *num){
     if (row == n){
-      #pragma omp task 
+      #pragma omp task
       backtracking(numQueens, row, prev, num);
       return;
     }
@@ -103,7 +101,7 @@ private:
               prev -> diag[curDiag] || 
               prev -> antiDiag[curAnti]))
         continue;
-      Node *node = new Node(numQueens, prev);
+      Node *node = new Node(prev);
       node -> placeQueen(col, curDiag, curAnti);
       createTask(row + 1, n, numQueens, numThreads,
               node, num);
