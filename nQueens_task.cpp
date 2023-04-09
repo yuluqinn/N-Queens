@@ -83,7 +83,7 @@ private:
     */
     #pragma omp parallel num_threads(numThreads) 
     {
-      #pragma omp single 
+      #pragma omp single nowait
       {
         createTask(0, numChild, numQueens, numThreads, nullptr, num);
       }
@@ -96,31 +96,17 @@ private:
       backtracking(numQueens, row, prev, num);
       return;
     }
-    if (prev){
-      for (int col=0; col<numQueens; col++){
-        int curDiag = row - col + numQueens;
-        int curAnti = row + col;
-        if (prev -> cols[col] || 
-          prev -> diag[curDiag] || 
-          prev -> antiDiag[curAnti])
-          continue;
-        Node *node = new Node(numQueens, prev);
-        node -> placeQueen(col, curDiag, curAnti);
-        createTask(row + 1, n, numQueens, numThreads,
-                node, num);
-      }
-    }
-    else {
-      //#pragma omp parallel for num_threads(numThreads) 
-      for (int col=0; col<numQueens; col++){
-        Node *node = new Node(numQueens);
-        int curDiag = row - col + numQueens;
-        int curAnti = row + col;
-        node -> placeQueen(col, curDiag, curAnti);
-
-        createTask(row + 1, n, numQueens, numThreads,
-                node, num);
-      }
+    for (int col=0; col<numQueens; col++){
+      int curDiag = row - col + numQueens;
+      int curAnti = row + col;
+      if (prev && (prev -> cols[col] || 
+              prev -> diag[curDiag] || 
+              prev -> antiDiag[curAnti]))
+        continue;
+      Node *node = new Node(numQueens, prev);
+      node -> placeQueen(col, curDiag, curAnti);
+      createTask(row + 1, n, numQueens, numThreads,
+              node, num);
     }
   }
 };
