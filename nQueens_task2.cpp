@@ -102,12 +102,49 @@ private:
   }
 };
 
+void createTask(int row, int n, int numQueens, 
+                queue<Node *>& taskQueue, Node *prev){
+  if (row == n){
+    taskQueue.push(node);
+    return;
+  }
+  if (prev){
+    for (int col=0; col<numQueens; col++){
+      int curDiag = row - col + numQueens;
+      int curAnti = row + col;
+      if (prev -> cols[col] || 
+        prev -> diag[curDiag] || 
+        prev -> antiDiag[curAnti])
+        continue;
+      Node *node = new Node(numQueens);
+      node -> cols = prev -> cols;
+      node -> diag = prev -> diag;
+      node -> antiDiag = prev -> antiDiag;
+      
+      node -> placeQueen(row, col, curDiag, curAnti);
+      createTask(row + 1, n, numQueens, 
+              taskQueue, node);
+    }
+  }
+  else {
+    for (int col=0; col<numQueens; col++){
+      Node *node = new Node(numQueens);
+      int curDiag = row - col + numQueens;
+      int curAnti = row + col;
+      node -> placeQueen(row, col, curDiag, curAnti);
+
+      createTask(row + 1, n, numQueens, 
+              taskQueue, node);
+    }
+  }
+}
+
 int main(int argc, char **argv){
   nQueens *sol = new nQueens();
   int numQueens=1, numThreads=1;
-  bool largeTasks = true;
+  int numChild=1;
   int opt;
-  while ((opt = getopt(argc, argv, "n:t:k")) != -1) {
+  while ((opt = getopt(argc, argv, "n:t:k:")) != -1) {
     switch (opt) {
     case 'n':
       numQueens = atoi(optarg);
@@ -116,10 +153,12 @@ int main(int argc, char **argv){
       numThreads = atoi(optarg);
       break;
     case 'k':
-      largeTasks = false;
+      numChild = atoi(optarg);
       break;
     default:
-      fprintf(stderr, "Usage: ./nQueens [-n number of queens] [-t number of threads]\n");
+      fprintf(stderr, "Usage: ./nQueens [-n number of queens] 
+                                [-t number of threads]
+                                [-k number of children]\n");
       exit(EXIT_FAILURE);
     }
   }
@@ -130,47 +169,8 @@ int main(int argc, char **argv){
   */
   queue<Node *> taskQueue;
   //int n= numThreads < numQueens ? numQueens : pow(numQueens, 2) + numQueens;
-  int n= largeTasks ? numQueens : pow(numQueens, 2) + numQueens;
-  for (int i=0; i<n; i++){
-    //int row = (int)log(i) / log(numQueens);
-    int row = i < numQueens ? 0 : 1;
-    if (row > 0){
-      // create smaller tasks in the case that number of threads is 
-      // higher than the board size
-      Node *prev = taskQueue.front();
+  createTask(0, numChild, numQueens, taskQueue, nullptr);
 
-      // pop the first task out
-      taskQueue.pop();
-      for (int col=0; col<numQueens; col++, i++){
-        int curDiag = row - col + numQueens;
-        int curAnti = row + col;
-        if (prev -> cols[col] || 
-            prev -> diag[curDiag] || 
-            prev -> antiDiag[curAnti])
-          continue;
-        Node *node = new Node(numQueens);
-        node -> cols = prev -> cols;
-        node -> diag = prev -> diag;
-        node -> antiDiag = prev -> antiDiag;
-        
-        node -> placeQueen(row, col, curDiag, curAnti);
-        //cout << row <<", "<<col<<endl;
-        taskQueue.push(node);
-        
-      }
-      //cout << endl;
-      delete prev; // Free memory for the previous task
-    }
-    else {
-      int col = i % numQueens;
-      Node *node = new Node(numQueens);
-      int curDiag = row - col + numQueens;
-      int curAnti = row + col;
-      node -> placeQueen(row, col, curDiag, curAnti);
-      // place a task on the queue
-      taskQueue.push(node);
-    }
-  }
   //exit(0);
   //cout << taskQueue.size() ; exit(0);
   int num = sol -> totalNQueens(taskQueue, numQueens, numThreads);
