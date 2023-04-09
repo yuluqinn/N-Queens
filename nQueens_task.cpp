@@ -43,8 +43,8 @@ public:
 
   }
 
-  void totalNQueens(queue<Node *>& Q, int numQueens, int numThreads, int *num){
-    distributeTask(Q, numQueens, numThreads, num);
+  void totalNQueens(int numQueens, int numThreads, int numChild, int *num){
+    distributeTask(numQueens, numThreads, numChild, num);
   }
 private:
   void backtracking(int n, int row, Node *node, int *num){
@@ -55,90 +55,76 @@ private:
       {
         (*num)++;
       }
+      
       return;
     }
+    
     for (int col=0; col<n; col++){
       int curDiag = row - col + n;
       int curAnti = row + col;
-
+      
       //check if we can place a queen
       if (node -> cols[col] || 
           node -> diag[curDiag] || 
           node -> antiDiag[curAnti])
         continue;
       node -> placeQueen(row + 1, col, curDiag, curAnti);
+      
       backtracking(n, row + 1, node, num);
       node -> removeQueen(col, curDiag, curAnti);
     }
   }
   
-  void distributeTask(queue<Node *>& taskQueue, int numQueens, int numThreads, int *num){
+  void distributeTask(int numQueens, int numThreads, int numChild, int *num){
     /*
       distribute the tasks across the thread
     */
-    bool done = false;
     #pragma omp parallel num_threads(numThreads) 
-    while (true){
-      Node *curTask;
-      // let one thread take a task in a queue one by one
-      // need to concern about the race condition
-      #pragma omp critical
+    {
+      #pragma omp single 
       {
-        if (taskQueue.empty())
-          done = true;
-        else {
-          curTask = taskQueue.front();
-          taskQueue.pop();
-        }
+        createTask(0, numChild, numQueens, numThreads, nullptr, num);
       }
+    }
+  }
 
-      //no more task
-      if (done)
-        break;
-      // run subtask in parallel
-      backtracking(numQueens, curTask -> row + 1, curTask, num);
-      delete curTask;
+  void createTask(int row, int n, int numQueens, int numThreads, Node *prev, int *num){
+    if (row == n){
+      #pragma omp task 
+      backtracking(numQueens, prev -> row + 1, prev, num);
+      return;
+    }
+    if (prev){
+      for (int col=0; col<numQueens; col++){
+        int curDiag = row - col + numQueens;
+        int curAnti = row + col;
+        if (prev -> cols[col] || 
+          prev -> diag[curDiag] || 
+          prev -> antiDiag[curAnti])
+          continue;
+        Node *node = new Node(numQueens);
+        node -> cols = prev -> cols;
+        node -> diag = prev -> diag;
+        node -> antiDiag = prev -> antiDiag;
+        node -> placeQueen(row, col, curDiag, curAnti);
+        createTask(row + 1, n, numQueens, numThreads,
+                node, num);
+      }
+    }
+    else {
+      //#pragma omp parallel for num_threads(numThreads) 
+      for (int col=0; col<numQueens; col++){
+        Node *node = new Node(numQueens);
+        int curDiag = row - col + numQueens;
+        int curAnti = row + col;
+        node -> placeQueen(row, col, curDiag, curAnti);
+
+        createTask(row + 1, n, numQueens, numThreads,
+                node, num);
+      }
     }
   }
 };
-
-void createTask(int row, int n, int numQueens, int numThreads,
-                queue<Node *>& taskQueue, Node *prev){
-  if (row == n){
-    #pragma omp critical
-    taskQueue.push(prev);
-    return;
-  }
-  if (prev){
-    for (int col=0; col<numQueens; col++){
-      int curDiag = row - col + numQueens;
-      int curAnti = row + col;
-      if (prev -> cols[col] || 
-        prev -> diag[curDiag] || 
-        prev -> antiDiag[curAnti])
-        continue;
-      Node *node = new Node(numQueens);
-      node -> cols = prev -> cols;
-      node -> diag = prev -> diag;
-      node -> antiDiag = prev -> antiDiag;
-      node -> placeQueen(row, col, curDiag, curAnti);
-      createTask(row + 1, n, numQueens, numThreads,
-              taskQueue, node);
-    }
-  }
-  else {
-    #pragma omp parallel for num_threads(numThreads) 
-    for (int col=0; col<numQueens; col++){
-      Node *node = new Node(numQueens);
-      int curDiag = row - col + numQueens;
-      int curAnti = row + col;
-      node -> placeQueen(row, col, curDiag, curAnti);
-
-      createTask(row + 1, n, numQueens, numThreads,
-              taskQueue, node);
-    }
-  }
-}
 
 int main(int argc, char **argv){
   nQueens *sol = new nQueens();
@@ -168,14 +154,9 @@ int main(int argc, char **argv){
     we should explore more on creating small tasks -> better load balancing.
     large tasks -> less communication
   */
-  queue<Node *> taskQueue;
-  createTask(0, numChild, numQueens, 
-         numThreads, taskQueue, nullptr);
  
-  //exit(0);
-  //cout << taskQueue.size() ; exit(0);
   int num = 0;
-  sol -> totalNQueens(taskQueue, numQueens, numThreads, &num);
+  sol -> totalNQueens(numQueens, numThreads, numChild, &num);
   cout << "The total number of solutions to the n-queens puzzle: " <<num <<endl;
   delete sol;
   return 0;

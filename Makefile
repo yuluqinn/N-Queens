@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-pedantic -fsigned-char -Wall -Werror -Wextra -fopenmp
+CFLAGS=-pedantic -fsigned-char -Wall -Wextra -fopenmp
 
 .PHONY: all
 all: nQueens_task
