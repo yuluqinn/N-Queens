@@ -31,14 +31,12 @@ int main() {
     cout << "Enter the size of the chessboard: ";
     cin >> n;
 
-    int positions[n];
-
     // Start timer
     auto start_time = chrono::high_resolution_clock::now();
 
+    #pragma omp parallel for
     for(int i=0; i<n; i++) {
-        #pragma omp parallel for
-        setQueen(positions, 0, i);
+        setQueen(new int[n], 0, i);
     }
 
     // End timer
@@ -48,7 +46,7 @@ int main() {
     auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
 
     cout << "Number of solutions: " << solutions << endl;
-    cout << "Time taken: " << duration << " milliseconds" << endl;
+    cout << "Time taken: " << float(duration/float(1000)) << " seconds" << endl;
 
     return 0;
 }
