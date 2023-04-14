@@ -31,6 +31,10 @@ int main() {
     cout << "Enter the size of the chessboard: ";
     cin >> n;
 
+    // Set the number of threads
+    int num_threads = 4; // Change this value to the desired number of threads
+    omp_set_num_threads(num_threads);
+    
     // Start timer
     auto start_time = chrono::high_resolution_clock::now();
 
