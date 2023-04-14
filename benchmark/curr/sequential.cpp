@@ -45,7 +45,7 @@ int main() {
     auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
 
     cout << "Number of solutions: " << solutions << endl;
-    cout << "Time taken: " << duration << " milliseconds" << endl;
+    cout << "Time taken: " << float(duration/float(1000)) << " seconds" << endl;
 
     return 0;
 }
