@@ -1,13 +1,14 @@
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
+#include <unistd.h>
 
 using namespace std;
 
 int solutions = 0;
-int size;
 
-void setQueen(int positions[], int row, int col) {
+
+void setQueen(int positions[], int row, int col, int size) {
     for(int i = 0; i < row; i++) {
         // Check if position is safe
         if (positions[i] == col || abs(positions[i] - col) == (row - i)) {
@@ -20,32 +21,33 @@ void setQueen(int positions[], int row, int col) {
         solutions++;
     } else {
         for(int i = 0; i < size; i++) {
-            setQueen(positions, row + 1, i);
+            setQueen(positions, row + 1, i, size);
         }
     }
 }
 
-int main() {
-    cout << "Enter the size of the chessboard: ";
-    cin >> size;
-
-    int positions[size];
-
-    // Start timer
-    auto start_time = chrono::high_resolution_clock::now();
-
-    for(int i = 0; i < size; i++) {
-        setQueen(positions, 0, i);
+int main(int argc, char **argv) {
+  int opt;
+  int size=1;
+  while ((opt = getopt(argc, argv, "n:")) != -1) {
+    switch (opt) {
+    case 'n':
+      size = atoi(optarg);
+      break;
+    default:
+      fprintf(stderr, "Usage: ./nQueens [-n number of queens] [-t number of threads]\n");
+      exit(EXIT_FAILURE);
     }
+  }
+  
+  int positions[size];
 
-    // End timer
-    auto end_time = chrono::high_resolution_clock::now();
 
-    // Calculate duration
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
+  for(int i = 0; i < size; i++) {
+      setQueen(positions, 0, i, size);
+  }
 
     cout << "Number of solutions: " << solutions << endl;
-    cout << "Time taken: " << float(duration/float(1000)) << " seconds" << endl;
-
+   
     return 0;
 }

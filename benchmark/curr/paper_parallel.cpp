@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <omp.h>
+#include <unistd.h>
 #include <chrono>
 
 using namespace std;
@@ -27,30 +28,34 @@ void setQueen(int positions[], int row, int col) {
     }
 }
 
-int main() {
-    cout << "Enter the size of the chessboard: ";
-    cin >> n;
-
-    // Set the number of threads
-    int num_threads = 4; // Change this value to the desired number of threads
+int main(int argc, char **argv) {
+  int num_threads=1;
+  int opt;
+  while ((opt = getopt(argc, argv, "n:t:")) != -1) {
+    switch (opt) {
+    case 'n':
+      n = atoi(optarg);
+      break;
+    case 't':
+      num_threads = atoi(optarg);
+      break;
+    default:
+      fprintf(stderr, "Usage: ./nQueens [-n number of queens] [-t number of threads]\n");
+      exit(EXIT_FAILURE);
+    }
+  }
     omp_set_num_threads(num_threads);
     
     // Start timer
-    auto start_time = chrono::high_resolution_clock::now();
+   
 
     #pragma omp parallel for
     for(int i=0; i<n; i++) {
         setQueen(new int[n], 0, i);
     }
 
-    // End timer
-    auto end_time = chrono::high_resolution_clock::now();
-
-    // Calculate duration
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
-
+   
     cout << "Number of solutions: " << solutions << endl;
-    cout << "Time taken: " << float(duration/float(1000)) << " seconds" << endl;
-
+    
     return 0;
 }
