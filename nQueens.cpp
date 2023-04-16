@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <omp.h>
 using namespace std;
-
+#define MAX_GRID 32
 class nQueens {
 public:
   //constructor
@@ -20,9 +20,9 @@ public:
       reduction(+:ans)
     
       for (int col=0; col<n; col++){
-        vector<bool> cols(n, false);
-        vector<bool> diag(2*n, false);
-        vector<bool> antiDiag(2*n, false);
+        bool cols[MAX_GRID] = {};
+        bool diag[2 * MAX_GRID] = {};
+        bool antiDiag[2 * MAX_GRID] = {}; 
         int curDiag = - col + n;
         int curAnti = col;
         cols[col] = true;
@@ -39,9 +39,9 @@ public:
 
 private:
   int backtracking(int row,
-                   vector<bool>& cols,
-                   vector<bool>& diag,
-                   vector<bool>& antiDiag,
+                   bool *cols,
+                   bool *diag,
+                   bool *antiDiag,
                    int n){
     if (row == n)
       return 1;
