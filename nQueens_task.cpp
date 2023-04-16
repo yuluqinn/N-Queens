@@ -80,7 +80,7 @@ private:
     */
     #pragma omp parallel num_threads(numThreads) 
     {
-      #pragma omp single nowait
+      #pragma omp single
       {
         
         createTask(0, numChild, numQueens, numThreads, nullptr, num);
